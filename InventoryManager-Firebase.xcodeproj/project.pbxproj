@@ -6,6 +6,14 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		ACDF249A2C82B50D0070894B /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = ACDF24992C82B50D0070894B /* FirebaseCrashlytics */; };
+		ACDF249C2C82B50D0070894B /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = ACDF249B2C82B50D0070894B /* FirebaseFirestore */; };
+		ACDF26632C8A39A80070894B /* FirebaseMLModelDownloader in Frameworks */ = {isa = PBXBuildFile; productRef = ACDF26622C8A39A80070894B /* FirebaseMLModelDownloader */; };
+		ACDF26952C8A41B50070894B /* FirebaseFunctions in Frameworks */ = {isa = PBXBuildFile; productRef = ACDF26942C8A41B50070894B /* FirebaseFunctions */; };
+		ACDF26972C8A41B50070894B /* FirebaseInstallations in Frameworks */ = {isa = PBXBuildFile; productRef = ACDF26962C8A41B50070894B /* FirebaseInstallations */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		AC3DD4942C814FFE005773E3 /* InventoryManager-Firebase.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "InventoryManager-Firebase.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -23,6 +31,11 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				ACDF26632C8A39A80070894B /* FirebaseMLModelDownloader in Frameworks */,
+				ACDF249A2C82B50D0070894B /* FirebaseCrashlytics in Frameworks */,
+				ACDF249C2C82B50D0070894B /* FirebaseFirestore in Frameworks */,
+				ACDF26952C8A41B50070894B /* FirebaseFunctions in Frameworks */,
+				ACDF26972C8A41B50070894B /* FirebaseInstallations in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,6 +78,11 @@
 			);
 			name = "InventoryManager-Firebase";
 			packageProductDependencies = (
+				ACDF24992C82B50D0070894B /* FirebaseCrashlytics */,
+				ACDF249B2C82B50D0070894B /* FirebaseFirestore */,
+				ACDF26622C8A39A80070894B /* FirebaseMLModelDownloader */,
+				ACDF26942C8A41B50070894B /* FirebaseFunctions */,
+				ACDF26962C8A41B50070894B /* FirebaseInstallations */,
 			);
 			productName = "InventoryManager-Firebase";
 			productReference = AC3DD4942C814FFE005773E3 /* InventoryManager-Firebase.app */;
@@ -94,6 +112,9 @@
 			);
 			mainGroup = AC3DD48B2C814FFE005773E3;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				ACDF24982C82B50D0070894B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = AC3DD4952C814FFE005773E3 /* Products */;
 			projectDirPath = "";
@@ -255,16 +276,18 @@
 				DEVELOPMENT_TEAM = Q66NH5Y4N4;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.graverani.InventoryManager-Firebase";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -284,16 +307,18 @@
 				DEVELOPMENT_TEAM = Q66NH5Y4N4;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.graverani.InventoryManager-Firebase";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -324,6 +349,45 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		ACDF24982C82B50D0070894B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 11.1.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		ACDF24992C82B50D0070894B /* FirebaseCrashlytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = ACDF24982C82B50D0070894B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCrashlytics;
+		};
+		ACDF249B2C82B50D0070894B /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = ACDF24982C82B50D0070894B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+		ACDF26622C8A39A80070894B /* FirebaseMLModelDownloader */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = ACDF24982C82B50D0070894B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseMLModelDownloader;
+		};
+		ACDF26942C8A41B50070894B /* FirebaseFunctions */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = ACDF24982C82B50D0070894B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFunctions;
+		};
+		ACDF26962C8A41B50070894B /* FirebaseInstallations */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = ACDF24982C82B50D0070894B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseInstallations;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = AC3DD48C2C814FFE005773E3 /* Project object */;
 }
