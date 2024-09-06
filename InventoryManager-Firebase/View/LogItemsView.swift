@@ -6,29 +6,36 @@
 //
 
 import SwiftUI
+import FirebaseFirestore
 
 struct LogItemsView: View {
     @Binding var scannedCode: String? // The barcode from the scanner
-    @State private var selectedItemType: String = "Computer"  // Default selection for item type
+    @State private var selectedItemType: String = ""  // Default selection for item type
     @State private var assetTag: String = ""
-    @State private var owner: String = ""  // Owner of the item
+    @State private var owner: String = ""  // Owner of the item (for computers)
+    @State private var model: String = ""  // Model of the item (for monitors)
+    @State private var serial: String = "" // Serial of the item (for other types)
     @State private var currentLocation: String = ""  // Current location of the item
     @State private var showingAlert = false
-
-    let itemTypes = ["Computer", "Monitor", "Server", "Switches", "iPads"]  // Options for item types
+    @State private var collectionNames: [String] = ["Computer", "Monitor", "Server", "Switches", "iPads"]  // Collection names representing item types
+    
+    // Firestore reference
+    let db = Firestore.firestore()
 
     var body: some View {
         NavigationView {
             Form {
+                // Section for Item Type Picker
                 Section(header: Text("Item Type")) {
                     Picker("Select Item Type", selection: $selectedItemType) {  // Drop-down menu for item types
-                        ForEach(itemTypes, id: \.self) { type in
+                        ForEach(collectionNames, id: \.self) { type in
                             Text(type)
                         }
                     }
                     .pickerStyle(MenuPickerStyle())  // Display as a drop-down menu
                 }
 
+                // Section for Asset Details
                 Section(header: Text("Asset Details")) {
                     TextField("Asset Tag", text: $assetTag)
                         .onAppear {
@@ -38,12 +45,18 @@ struct LogItemsView: View {
                             }
                         }
 
-                    // Always show the current location field
                     TextField("Branch/Department", text: $currentLocation)
                 }
 
-                Section(header: Text("Owner Details")) {
-                    TextField("Owner", text: $owner)  // New field for owner
+                // Dynamic Section based on selected item type
+                Section(header: Text(getDynamicFieldTitle())) {
+                    if selectedItemType == "Computer" {
+                        TextField("Owner", text: $owner)
+                    } else if selectedItemType == "Monitor" {
+                        TextField("Model", text: $model)
+                    } else {
+                        TextField("Serial Number", text: $serial)
+                    }
                 }
 
                 Button(action: {
@@ -56,35 +69,73 @@ struct LogItemsView: View {
                 }
             }
             .navigationTitle("Log New Item")
-           
+            .onAppear {
+                if let firstType = collectionNames.first {
+                    self.selectedItemType = firstType
+                }
+            }
         }
     }
 
+    // Determines the title for the dynamic field section
+    private func getDynamicFieldTitle() -> String {
+        switch selectedItemType {
+        case "Computer":
+            return "Owner Details"
+        case "Monitor":
+            return "Model Details"
+        default:
+            return "Serial Details"
+        }
+    }
+
+    // Logs Item into Firebase
     private func logItem() {
-        // Validation
-        if assetTag.isEmpty || currentLocation.isEmpty || owner.isEmpty {
+        // Validation based on selected item type
+        if assetTag.isEmpty || currentLocation.isEmpty || (selectedItemType == "Computer" && owner.isEmpty) || (selectedItemType == "Monitor" && model.isEmpty) || (selectedItemType != "Computer" && selectedItemType != "Monitor" && serial.isEmpty) {
             showingAlert = true
             return
         }
 
-        // Prepare the data for logging
-        let itemData = [
-            "itemType": selectedItemType,  // Selected item type
-            "assetTag": assetTag,
+        // Determine check-in or check-out based on location
+        let isCheckIn = (currentLocation == "DepartmentIT")
+        var checkInOutData: [String: Any] = [
             "currentLocation": currentLocation,
-            "owner": owner,
-            "checkInOutTime": Date()  // Automatically use the current time for check-in/out
-        ] as [String : Any]
+        ]
 
-        print("Logged Item: \(itemData)")  // Replace with Firebase logic when implemented
-        resetForm()  // Reset the form after logging
+        // Add dynamic field based on selected item type
+        if selectedItemType == "Computer" {
+            checkInOutData["owner"] = owner
+        } else if selectedItemType == "Monitor" {
+            checkInOutData["model"] = model
+        } else {
+            checkInOutData["serialNumber"] = serial
+        }
+
+        if isCheckIn {
+            checkInOutData["checkIn"] = Date()
+        } else {
+            checkInOutData["checkOut"] = Date()
+        }
+
+        // Use the assetTag as the document ID in the selected collection
+        db.collection(selectedItemType).document(assetTag).setData(checkInOutData, merge: true) { error in
+            if let error = error {
+                print("Error setting document: \(error.localizedDescription)")
+            } else {
+                print("Document successfully updated in the \(selectedItemType) collection with Asset Tag \(assetTag).")
+                resetForm()
+            }
+        }
     }
 
     private func resetForm() {
-        selectedItemType = "Computer"
+        selectedItemType = collectionNames.first ?? "Computer"
         assetTag = ""
         currentLocation = ""
         owner = ""
+        model = ""
+        serial = ""
     }
 }
 

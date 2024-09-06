@@ -8,10 +8,9 @@
 import AVFoundation
 import SwiftUI
 
-class BarcodeScannerViewController: UIViewController {
+class BarcodeScannerViewController: UIViewController, AVCaptureMetadataOutputObjectsDelegate {
     var captureSession: AVCaptureSession!
     var previewLayer: AVCaptureVideoPreviewLayer!
-    var delegate: AVCaptureMetadataOutputObjectsDelegate?
     var scannedCode: Binding<String?>?
 
     override func viewDidLoad() {
@@ -43,19 +42,35 @@ class BarcodeScannerViewController: UIViewController {
 
         if captureSession.canAddOutput(metadataOutput) {
             captureSession.addOutput(metadataOutput)
-            metadataOutput.setMetadataObjectsDelegate(delegate, queue: DispatchQueue.main)
-            metadataOutput.metadataObjectTypes = [.code39]
+            metadataOutput.setMetadataObjectsDelegate(self, queue: DispatchQueue.main)
+            metadataOutput.metadataObjectTypes = [.code39, .qr, .ean13, .ean8, .code128]
         } else {
             print("Failed to add output to capture session")
             return
         }
 
         previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
-        previewLayer.frame = view.layer.bounds
+        // Set a frame that takes up most of the screen except for the TabView
+        previewLayer.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: view.frame.height * 0.83)
         previewLayer.videoGravity = .resizeAspectFill
         view.layer.addSublayer(previewLayer)
 
         captureSession.startRunning()
+    }
+
+    func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
+        if let metadataObject = metadataObjects.first {
+            guard let readableObject = metadataObject as? AVMetadataMachineReadableCodeObject else { return }
+            guard let scannedValue = readableObject.stringValue else { return }
+
+            AudioServicesPlaySystemSound(SystemSoundID(kSystemSoundID_Vibrate))
+
+            DispatchQueue.main.async {
+                self.scannedCode?.wrappedValue = scannedValue
+            }
+
+            captureSession.stopRunning()
+        }
     }
 
     override func viewWillAppear(_ animated: Bool) {

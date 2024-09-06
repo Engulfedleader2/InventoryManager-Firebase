@@ -14,7 +14,6 @@ struct BarcodeScannerView: UIViewControllerRepresentable {
 
     func makeUIViewController(context: Context) -> BarcodeScannerViewController {
         let viewController = BarcodeScannerViewController()
-        viewController.delegate = context.coordinator  // Set the delegate to the coordinator
         viewController.scannedCode = $scannedCode
         return viewController
     }
@@ -38,16 +37,10 @@ struct BarcodeScannerView: UIViewControllerRepresentable {
                 guard let stringValue = readableObject.stringValue else { return }
                 AudioServicesPlaySystemSound(SystemSoundID(kSystemSoundID_Vibrate)) // Optional vibration feedback
 
-                // Print the type of barcode and its value
-                print("Scanned Barcode Type: \(readableObject.type)")
-                print("Scanned Barcode Value: \(stringValue)")
-
-                // Update the scanned code and switch to the LogItemsView tab
                 DispatchQueue.main.async {
                     self.parent.scannedCode = stringValue
                     self.parent.selectedTab = 1 // Automatically switch to the LogItemsView tab
 
-                    // Reset the scanned code after switching tabs to prevent further automatic tab changes
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                         self.parent.scannedCode = nil
                     }

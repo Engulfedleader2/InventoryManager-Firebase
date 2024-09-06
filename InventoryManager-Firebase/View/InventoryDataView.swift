@@ -6,28 +6,52 @@
 //
 
 import SwiftUI
+import FirebaseFirestore
 
 struct InventoryDataView: View {
-    // Local inventory items
-    @State private var inventoryItems: [InventoryItem] = [
-        InventoryItem(name: "Computers", quantity: 10, assetTag: "A001", location: "Warehouse"),
-        InventoryItem(name: "Monitors", quantity: 15, assetTag: "M100", location: "Office"),
-        InventoryItem(name: "Servers", quantity: 5, assetTag: "S200", location: "Data Center"),
-        InventoryItem(name: "Switches", quantity: 20, assetTag: "SW300", location: "Network Room"),
-        InventoryItem(name: "iPads", quantity: 12, assetTag: "IP400", location: "Office")
-    ]
-    
+    @State private var inventoryItems: [InventoryItem] = [] // This will store the collection names and document counts
+    private var db = Firestore.firestore()
+
     var body: some View {
         NavigationView {
             ScrollView {
-                VStack(spacing: 20) {  // Vertical stack with spacing between boxes
+                VStack(spacing: 20) {
                     ForEach(inventoryItems) { item in
                         InventoryBoxView(item: item)  // A reusable component for each box
                     }
                 }
                 .padding()
+                .onAppear {
+                    fetchCollectionsData() // Fetch collection data from Firestore when the view appears
+                }
             }
             .navigationTitle("Inventory")
+        }
+    }
+
+    // Function to fetch Firestore collections and document counts
+    private func fetchCollectionsData() {
+        let collectionNames = ["Computer", "Monitor", "Server", "Switches", "iPads"] // Specify collection names
+        var items: [InventoryItem] = Array(repeating: InventoryItem(name: "", quantity: 0), count: collectionNames.count) // Pre-fill array with placeholders
+        
+        let group = DispatchGroup()
+
+        for (index, collectionName) in collectionNames.enumerated() {
+            group.enter()  // Enter the group for each Firestore request
+            db.collection(collectionName).getDocuments { (snapshot, error) in
+                if let error = error {
+                    print("Error fetching collection \(collectionName): \(error.localizedDescription)")
+                } else {
+                    let documentCount = snapshot?.documents.count ?? 0
+                    items[index] = InventoryItem(name: collectionName, quantity: documentCount)  // Update the correct index
+                }
+                group.leave()  // Leave the group once the request completes
+            }
+        }
+
+        // Notify when all Firestore calls have completed
+        group.notify(queue: .main) {
+            self.inventoryItems = items
         }
     }
 }
@@ -45,11 +69,8 @@ struct InventoryBoxView: View {
                 .font(.subheadline)
                 .foregroundColor(.white)
             HStack {
-                Spacer() // Push the button to the right
-                Button(action: {
-                    // More info button action
-                    print("More info about \(item.name)")
-                }) {
+                Spacer()
+                NavigationLink(destination: InventoryDetailView(collectionName: item.name)) {
                     Text("More Info")
                         .foregroundColor(.white)
                         .font(.subheadline)
@@ -61,18 +82,18 @@ struct InventoryBoxView: View {
         }
         .padding()
         .background(backgroundColor(for: item.name))  // Custom background color based on item name
-        .cornerRadius(10)  // Rounded corners
+        .cornerRadius(10)
         .shadow(radius: 2)  // Optional shadow for the box
     }
     
     // Function to return the background color based on the item name
     private func backgroundColor(for title: String) -> Color {
         switch title {
-        case "Computers":
+        case "Computer":
             return Color(hex: "14B8A6")
-        case "Monitors":
+        case "Monitor":
             return Color(hex: "EF4444")
-        case "Servers":
+        case "Server":
             return Color(hex: "3B82F6")
         case "Switches":
             return Color(hex: "F97316")
@@ -116,8 +137,6 @@ struct InventoryItem: Identifiable {
     let id = UUID()
     var name: String
     var quantity: Int
-    var assetTag: String? = nil
-    var location: String? = nil
 }
 
 #Preview {
