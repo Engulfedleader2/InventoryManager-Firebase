@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AC6A9FBE2C8F474200B59596 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = AC6A9FBD2C8F474200B59596 /* FirebaseAnalytics */; };
 		ACDF249A2C82B50D0070894B /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = ACDF24992C82B50D0070894B /* FirebaseCrashlytics */; };
 		ACDF249C2C82B50D0070894B /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = ACDF249B2C82B50D0070894B /* FirebaseFirestore */; };
 		ACDF26632C8A39A80070894B /* FirebaseMLModelDownloader in Frameworks */ = {isa = PBXBuildFile; productRef = ACDF26622C8A39A80070894B /* FirebaseMLModelDownloader */; };
@@ -33,6 +34,7 @@
 			files = (
 				ACDF26632C8A39A80070894B /* FirebaseMLModelDownloader in Frameworks */,
 				ACDF249A2C82B50D0070894B /* FirebaseCrashlytics in Frameworks */,
+				AC6A9FBE2C8F474200B59596 /* FirebaseAnalytics in Frameworks */,
 				ACDF249C2C82B50D0070894B /* FirebaseFirestore in Frameworks */,
 				ACDF26952C8A41B50070894B /* FirebaseFunctions in Frameworks */,
 				ACDF26972C8A41B50070894B /* FirebaseInstallations in Frameworks */,
@@ -83,6 +85,7 @@
 				ACDF26622C8A39A80070894B /* FirebaseMLModelDownloader */,
 				ACDF26942C8A41B50070894B /* FirebaseFunctions */,
 				ACDF26962C8A41B50070894B /* FirebaseInstallations */,
+				AC6A9FBD2C8F474200B59596 /* FirebaseAnalytics */,
 			);
 			productName = "InventoryManager-Firebase";
 			productReference = AC3DD4942C814FFE005773E3 /* InventoryManager-Firebase.app */;
@@ -277,7 +280,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = ITAMS;
-				INFOPLIST_KEY_NSCameraUsageDescription = "";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Gets Camera details";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -309,7 +312,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = ITAMS;
-				INFOPLIST_KEY_NSCameraUsageDescription = "";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Gets Camera details";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -364,6 +367,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		AC6A9FBD2C8F474200B59596 /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = ACDF24982C82B50D0070894B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
+		};
 		ACDF24992C82B50D0070894B /* FirebaseCrashlytics */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = ACDF24982C82B50D0070894B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;

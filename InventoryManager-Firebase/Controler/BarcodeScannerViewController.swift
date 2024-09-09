@@ -17,7 +17,13 @@ class BarcodeScannerViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        setupCamera()
+        
+        // Only set up the camera if not running in a preview
+        #if !targetEnvironment(simulator)
+        if !isRunningInPreview {
+            setupCamera()
+        }
+        #endif
     }
 
     func setupCamera() {
@@ -63,27 +69,35 @@ class BarcodeScannerViewController: UIViewController {
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
 
-        // Set the frame for the preview layer to not take up the full screen, keeping space for the tab bar.
         let safeAreaInsets = view.safeAreaInsets
         let availableHeight = view.bounds.height - safeAreaInsets.bottom - 100 // Adjust 100 for tab bar height and spacing
-        previewLayer.frame = CGRect(x: 0, y: 0, width: view.bounds.width, height: availableHeight)
+        previewLayer?.frame = CGRect(x: 0, y: 0, width: view.bounds.width, height: availableHeight)
     }
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        #if !targetEnvironment(simulator)
         if !(captureSession?.isRunning ?? false) {
             DispatchQueue.global(qos: .background).async {
                 self.captureSession.startRunning()
             }
         }
+        #endif
     }
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        if captureSession.isRunning {
+        #if !targetEnvironment(simulator)
+        if captureSession?.isRunning ?? false {
             DispatchQueue.global(qos: .background).async {
                 self.captureSession.stopRunning()
             }
         }
+        #endif
+    }
+
+    // Helper to detect if we're running in SwiftUI Preview mode
+    var isRunningInPreview: Bool {
+        return ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] != nil
     }
 }

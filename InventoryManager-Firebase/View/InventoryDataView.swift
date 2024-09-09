@@ -9,20 +9,27 @@ import SwiftUI
 import FirebaseFirestore
 
 struct InventoryDataView: View {
-    @State private var inventoryItems: [InventoryItem] = [] // This will store the collection names and document counts
+    @State private var inventoryItems: [InventoryItem] = [] // State variable for production use
     private var db = Firestore.firestore()
+
+    // Optional initializer for previews
+    init(inventoryItems: [InventoryItem] = []) {
+        _inventoryItems = State(initialValue: inventoryItems)
+    }
 
     var body: some View {
         NavigationView {
             ScrollView {
-                VStack(spacing: 20) {
+                VStack(spacing: 1) {
                     ForEach(inventoryItems) { item in
                         InventoryBoxView(item: item)  // A reusable component for each box
                     }
                 }
                 .padding()
                 .onAppear {
-                    fetchCollectionsData() // Fetch collection data from Firestore when the view appears
+                    if inventoryItems.isEmpty {
+                        fetchCollectionsData() // Fetch collection data from Firestore when the view appears
+                    }
                 }
             }
             .navigationTitle("Inventory")
@@ -31,59 +38,90 @@ struct InventoryDataView: View {
 
     // Function to fetch Firestore collections and document counts
     private func fetchCollectionsData() {
-        let collectionNames = ["Computer", "Monitor", "Server", "Switches", "iPads"] // Specify collection names
-        var items: [InventoryItem] = Array(repeating: InventoryItem(name: "", quantity: 0), count: collectionNames.count) // Pre-fill array with placeholders
-        
+        let collectionNames = ["Computer", "Monitor", "Server", "Switches", "iPads", "Gary"] // Add your collections
+        var items: [InventoryItem] = Array(repeating: InventoryItem(name: "", quantity: 0), count: collectionNames.count)
+
         let group = DispatchGroup()
 
         for (index, collectionName) in collectionNames.enumerated() {
-            group.enter()  // Enter the group for each Firestore request
-            db.collection(collectionName).getDocuments { (snapshot, error) in
+            group.enter()
+            db.collection(collectionName).addSnapshotListener { (snapshot, error) in
                 if let error = error {
                     print("Error fetching collection \(collectionName): \(error.localizedDescription)")
                 } else {
                     let documentCount = snapshot?.documents.count ?? 0
-                    items[index] = InventoryItem(name: collectionName, quantity: documentCount)  // Update the correct index
+                    items[index] = InventoryItem(name: collectionName, quantity: documentCount)
+
+                    DispatchQueue.main.async {
+                        self.inventoryItems = items  // Update state
+                    }
                 }
-                group.leave()  // Leave the group once the request completes
+                group.leave()
             }
         }
 
-        // Notify when all Firestore calls have completed
         group.notify(queue: .main) {
             self.inventoryItems = items
         }
     }
 }
 
-// Custom view for each inventory box
+// Sample preview
+#Preview {
+    InventoryDataView(inventoryItems: [
+        InventoryItem(name: "Computer", quantity: 10),
+        InventoryItem(name: "Monitor", quantity: 15),
+        InventoryItem(name: "Server", quantity: 5),
+        InventoryItem(name: "Switches", quantity: 20),
+        InventoryItem(name: "iPads", quantity: 12),
+        InventoryItem(name: "Gary", quantity: 5)
+    ])
+}
+
 struct InventoryBoxView: View {
     var item: InventoryItem
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(item.name)
-                .font(.headline)
-                .foregroundColor(.white)
-            Text("Quantity: \(item.quantity)")
-                .font(.subheadline)
-                .foregroundColor(.white)
-            HStack {
-                Spacer()
-                NavigationLink(destination: InventoryDetailView(collectionName: item.name)) {
-                    Text("More Info")
-                        .foregroundColor(.white)
-                        .font(.subheadline)
-                        .padding(8)
-                        .background(Color.black.opacity(0.2))
-                        .cornerRadius(5)
+        ZStack {
+            // Background color for all items
+            backgroundColor(for: item.name)
+                .cornerRadius(10)
+                .shadow(radius: 2)
+
+            // Conditional background image for "Gary"
+            if item.name == "Gary" {
+                Image("gary")  // Replace with your image name
+                    .resizable()
+                    .scaledToFill()
+                    .opacity(0.2)  // Adjust opacity for subtle effect
+                    .frame(height: 120)  // Ensure the image height matches the box
+                    .clipShape(RoundedRectangle(cornerRadius: 10))  // Clip to match box shape
+            }
+
+            // Box content
+            VStack(alignment: .leading, spacing: 10) {
+                Text(item.name)
+                    .font(.headline)
+                    .foregroundColor(.white)
+                Text("Quantity: \(item.quantity)")
+                    .font(.subheadline)
+                    .foregroundColor(.white)
+                HStack {
+                    Spacer()
+                    NavigationLink(destination: InventoryDetailView(collectionName: item.name)) {
+                        Text("More Info")
+                            .foregroundColor(.white)
+                            .font(.subheadline)
+                            .padding(8)
+                            .background(Color.black.opacity(0.2))
+                            .cornerRadius(5)
+                    }
                 }
             }
+            .padding()
         }
+        .frame(height: 120)  // Ensure consistent height for all boxes
         .padding()
-        .background(backgroundColor(for: item.name))  // Custom background color based on item name
-        .cornerRadius(10)
-        .shadow(radius: 2)  // Optional shadow for the box
     }
     
     // Function to return the background color based on the item name
@@ -99,6 +137,8 @@ struct InventoryBoxView: View {
             return Color(hex: "F97316")
         case "iPads":
             return Color(hex: "A855F7")
+        case "Gary":
+            return Color(hex: "22C55E")  // Green color for Gary
         default:
             return Color(.systemGray6)  // Default color if title doesn't match
         }
@@ -139,6 +179,14 @@ struct InventoryItem: Identifiable {
     var quantity: Int
 }
 
+// Sample preview
 #Preview {
-    InventoryDataView()
+    InventoryDataView(inventoryItems: [
+        InventoryItem(name: "Computer", quantity: 10),
+        InventoryItem(name: "Monitor", quantity: 15),
+        InventoryItem(name: "Server", quantity: 5),
+        InventoryItem(name: "Switches", quantity: 20),
+        InventoryItem(name: "iPads", quantity: 12),
+        InventoryItem(name: "Gary", quantity: 5)
+    ])
 }
