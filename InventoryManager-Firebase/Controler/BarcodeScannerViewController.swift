@@ -8,10 +8,12 @@
 import AVFoundation
 import SwiftUI
 
-class BarcodeScannerViewController: UIViewController, AVCaptureMetadataOutputObjectsDelegate {
+class BarcodeScannerViewController: UIViewController {
     var captureSession: AVCaptureSession!
     var previewLayer: AVCaptureVideoPreviewLayer!
     var scannedCode: Binding<String?>?
+    var selectedTab: Binding<Int>?
+    var delegate: AVCaptureMetadataOutputObjectsDelegate?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -42,48 +44,46 @@ class BarcodeScannerViewController: UIViewController, AVCaptureMetadataOutputObj
 
         if captureSession.canAddOutput(metadataOutput) {
             captureSession.addOutput(metadataOutput)
-            metadataOutput.setMetadataObjectsDelegate(self, queue: DispatchQueue.main)
-            metadataOutput.metadataObjectTypes = [.code39, .qr, .ean13, .ean8, .code128]
+            metadataOutput.setMetadataObjectsDelegate(delegate, queue: DispatchQueue.main)
+            metadataOutput.metadataObjectTypes = [.code39]
         } else {
             print("Failed to add output to capture session")
             return
         }
 
         previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
-        // Set a frame that takes up most of the screen except for the TabView
-        previewLayer.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: view.frame.height * 0.83)
         previewLayer.videoGravity = .resizeAspectFill
         view.layer.addSublayer(previewLayer)
 
-        captureSession.startRunning()
+        DispatchQueue.global(qos: .background).async {
+            self.captureSession.startRunning()
+        }
     }
 
-    func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
-        if let metadataObject = metadataObjects.first {
-            guard let readableObject = metadataObject as? AVMetadataMachineReadableCodeObject else { return }
-            guard let scannedValue = readableObject.stringValue else { return }
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
 
-            AudioServicesPlaySystemSound(SystemSoundID(kSystemSoundID_Vibrate))
-
-            DispatchQueue.main.async {
-                self.scannedCode?.wrappedValue = scannedValue
-            }
-
-            captureSession.stopRunning()
-        }
+        // Set the frame for the preview layer to not take up the full screen, keeping space for the tab bar.
+        let safeAreaInsets = view.safeAreaInsets
+        let availableHeight = view.bounds.height - safeAreaInsets.bottom - 100 // Adjust 100 for tab bar height and spacing
+        previewLayer.frame = CGRect(x: 0, y: 0, width: view.bounds.width, height: availableHeight)
     }
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         if !(captureSession?.isRunning ?? false) {
-            captureSession.startRunning()
+            DispatchQueue.global(qos: .background).async {
+                self.captureSession.startRunning()
+            }
         }
     }
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         if captureSession.isRunning {
-            captureSession.stopRunning()
+            DispatchQueue.global(qos: .background).async {
+                self.captureSession.stopRunning()
+            }
         }
     }
 }

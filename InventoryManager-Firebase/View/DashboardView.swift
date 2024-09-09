@@ -20,10 +20,9 @@ struct DashboardView: View {
             ScrollView {
                 VStack(spacing: 20) {
                     // Total Assets Section
-                    VStack(alignment: .leading) {
+                    VStack(alignment: .leading, spacing: 8) {
                         Text("Total Assets")
-                            .font(.title2)
-                            .fontWeight(.bold)
+                            .font(.headline)
                             .padding(.leading)
 
                         if let errorMessage = errorMessage {
@@ -34,18 +33,25 @@ struct DashboardView: View {
                             ProgressView("Loading data...")
                                 .padding()
                         } else {
-                            Text("\(totalAssets)")  // Display total assets here
-                                .font(.largeTitle)
-                                .fontWeight(.bold)
-                                .padding(.horizontal)
+                            HStack {
+                                Spacer()
+                                Text("\(totalAssets)")
+                                    .font(.system(size: 60, weight: .bold, design: .rounded))
+                                    .padding()
+                                Spacer()
+                            }
                         }
                     }
+                    .padding()
+                    .background(Color(.systemGray6))
+                    .cornerRadius(12)
+                    .shadow(radius: 4)
+                    .padding(.horizontal)
 
                     // Recent Activity Section
-                    VStack(alignment: .leading) {
+                    VStack(alignment: .leading, spacing: 8) {
                         Text("Recent Activity")
-                            .font(.title2)
-                            .fontWeight(.bold)
+                            .font(.headline)
                             .padding(.leading)
 
                         if recentActivities.isEmpty {
@@ -53,34 +59,33 @@ struct DashboardView: View {
                                 .foregroundColor(.secondary)
                                 .padding(.leading)
                         } else {
-                            ForEach(recentActivities.prefix(5)) { activity in  // Show only the 5 most recent activities
-                                HStack {
-                                    VStack(alignment: .leading) {
-                                        Text("\(activity.assetTag) (\(activity.collection))")
-                                            .font(.headline)
-                                        if let checkIn = activity.checkIn {
-                                            Text("Checked in: \(checkIn, formatter: dateFormatter)")
-                                                .font(.subheadline)
-                                                .foregroundColor(.green)
-                                        }
-                                        if let checkOut = activity.checkOut {
-                                            Text("Checked out: \(checkOut, formatter: dateFormatter)")
-                                                .font(.subheadline)
-                                                .foregroundColor(.red)
-                                        }
+                            ForEach(recentActivities.prefix(5)) { activity in
+                                VStack(alignment: .leading, spacing: 6) {
+                                    Text("\(activity.assetTag) (\(activity.collection))")
+                                        .font(.subheadline)
+                                        .foregroundColor(.primary)
+                                    if let checkIn = activity.checkIn {
+                                        Text("Checked in: \(checkIn, formatter: dateFormatter)")
+                                            .font(.caption)
+                                            .foregroundColor(.green)
                                     }
-                                    Spacer()
+                                    if let checkOut = activity.checkOut {
+                                        Text("Checked out: \(checkOut, formatter: dateFormatter)")
+                                            .font(.caption)
+                                            .foregroundColor(.red)
+                                    }
                                 }
-                                .padding(.vertical, 10)
+                                .padding()
                                 .background(Color(.systemGray5))
-                                .cornerRadius(8)
+                                .cornerRadius(10)
                                 .padding(.horizontal)
                             }
                         }
                     }
+                    .padding()
                     .background(Color(.systemGray6))
-                    .cornerRadius(10)
-                    .shadow(radius: 2)
+                    .cornerRadius(12)
+                    .shadow(radius: 4)
                     .padding(.horizontal)
                 }
                 .padding(.top)
@@ -108,7 +113,6 @@ struct DashboardView: View {
                     self.errorMessage = "Error fetching \(collection): \(error.localizedDescription)"
                 } else if let documents = snapshot?.documents {
                     let count = documents.count
-                    print("\(collection) count: \(count)") // Debugging: Print the count for each collection
                     total += count
                 }
                 group.leave()
@@ -116,7 +120,6 @@ struct DashboardView: View {
         }
 
         group.notify(queue: .main) {
-            print("Total Assets: \(total)")  // Debugging: Print the total count
             self.totalAssets = total
             self.isLoading = false
         }
@@ -129,7 +132,6 @@ struct DashboardView: View {
         
         let group = DispatchGroup()
 
-        // Loop through each collection to fetch check-in and check-out data
         for collection in collections {
             group.enter()
             db.collection(collection).getDocuments { (snapshot, error) in
@@ -141,23 +143,12 @@ struct DashboardView: View {
                         let assetTag = document.documentID
                         let checkIn = (data["checkIn"] as? Timestamp)?.dateValue()
                         let checkOut = (data["checkOut"] as? Timestamp)?.dateValue()
-                        
-                        // Only add the activity if there's a checkIn or checkOut
-                        if let checkIn = checkIn, checkIn != Date.distantPast {
-                            let activity = RecentActivity(
-                                assetTag: assetTag,
-                                collection: collection,
-                                checkIn: checkIn,
-                                checkOut: checkOut
-                            )
+
+                        if let checkIn = checkIn {
+                            let activity = RecentActivity(assetTag: assetTag, collection: collection, checkIn: checkIn, checkOut: checkOut)
                             activities.append(activity)
-                        } else if let checkOut = checkOut, checkOut != Date.distantPast {
-                            let activity = RecentActivity(
-                                assetTag: assetTag,
-                                collection: collection,
-                                checkIn: checkIn,
-                                checkOut: checkOut
-                            )
+                        } else if let checkOut = checkOut {
+                            let activity = RecentActivity(assetTag: assetTag, collection: collection, checkIn: checkIn, checkOut: checkOut)
                             activities.append(activity)
                         }
                     }
@@ -166,14 +157,8 @@ struct DashboardView: View {
             }
         }
 
-        // Notify when all async requests complete
         group.notify(queue: .main) {
-            // Sort by the most recent activity (check-in or check-out)
-            self.recentActivities = activities.sorted {
-                let date1 = max($0.checkIn ?? Date.distantPast, $0.checkOut ?? Date.distantPast)
-                let date2 = max($1.checkIn ?? Date.distantPast, $1.checkOut ?? Date.distantPast)
-                return date1 > date2
-            }
+            self.recentActivities = activities.sorted { ($0.checkIn ?? Date.distantPast) > ($1.checkIn ?? Date.distantPast) }
         }
     }
 }
