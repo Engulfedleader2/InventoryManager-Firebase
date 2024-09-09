@@ -7,7 +7,6 @@
 
 import SwiftUI
 import FirebaseFirestore
-import Combine
 
 struct LogItemsView: View {
     @Binding var scannedCode: String? // The barcode from the scanner
@@ -19,8 +18,6 @@ struct LogItemsView: View {
     @State private var currentLocation: String = ""  // Current location of the item
     @State private var showingAlert = false
     @State private var collectionNames: [String] = ["Computer", "Monitor", "Server", "Switches", "iPads"]
-
-    @ObservedObject private var keyboardResponder = KeyboardResponder()
 
     let db = Firestore.firestore()
 
@@ -130,10 +127,7 @@ struct LogItemsView: View {
 
                     Spacer()
                 }
-                .padding(.bottom, keyboardResponder.currentHeight)  // Adjust padding based on keyboard height
-                .animation(.easeInOut)  // Smooth animation when keyboard appears/disappears
                 .onTapGesture {
-                    // Dismiss the keyboard when tapping anywhere outside the text fields
                     UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                 }
             }
@@ -142,6 +136,7 @@ struct LogItemsView: View {
         }
     }
 
+    // Determines the title for the dynamic field section
     private func getDynamicFieldTitle() -> String {
         switch selectedItemType {
         case "Computer":
@@ -153,6 +148,7 @@ struct LogItemsView: View {
         }
     }
 
+    // Logs Item into Firebase
     private func logItem() {
         // Validation based on selected item type
         if assetTag.isEmpty || currentLocation.isEmpty || (selectedItemType == "Computer" && owner.isEmpty) || (selectedItemType == "Monitor" && model.isEmpty) || (selectedItemType != "Computer" && selectedItemType != "Monitor" && serial.isEmpty) {
@@ -163,27 +159,11 @@ struct LogItemsView: View {
         // Reference to the document in Firestore
         let documentRef = db.collection(selectedItemType).document(assetTag)
 
-        // Check if the document already exists
-        documentRef.getDocument { (document, error) in
-            if let error = error {
-                print("Error fetching document: \(error.localizedDescription)")
-                return
-            }
-
-            if let document = document, document.exists {
-                // If document exists, print a message and exit
-                print("Item already exists in the database with Asset Tag: \(self.assetTag)")
-            } else {
-                // If document does not exist, proceed to log the item
-                self.saveNewItem(documentRef: documentRef)
-            }
-        }
-    }
-
-    private func saveNewItem(documentRef: DocumentReference) {
-        // Determine check-in or check-out based on location
-        let isCheckIn = (currentLocation == "DepartmentIT")
-        var checkInOutData: [String: Any] = ["currentLocation": currentLocation]
+        // Prepare the data to be stored
+        var checkInOutData: [String: Any] = [
+            "currentLocation": currentLocation,
+            "checkOut": Date(),
+        ]
 
         // Add dynamic field based on selected item type
         if selectedItemType == "Computer" {
@@ -194,32 +174,28 @@ struct LogItemsView: View {
             checkInOutData["serialNumber"] = serial
         }
 
-        if isCheckIn {
-            checkInOutData["checkIn"] = Date()
-        } else {
-            checkInOutData["checkOut"] = Date()
-        }
-
-        // Save the new item to Firestore
+        // Save the data in Firestore
         documentRef.setData(checkInOutData, merge: true) { error in
             if let error = error {
                 print("Error setting document: \(error.localizedDescription)")
             } else {
-                print("Document successfully added to the \(self.selectedItemType) collection with Asset Tag \(self.assetTag).")
-                self.resetForm()
+                print("Document successfully logged.")
+                resetForm()
             }
         }
     }
 
+    // Reset form after submission
     private func resetForm() {
         selectedItemType = "Computer"
         assetTag = ""
-        currentLocation = ""
         owner = ""
         model = ""
         serial = ""
+        currentLocation = ""
     }
 }
+
 struct LogItemsView_Previews: PreviewProvider {
     static var previews: some View {
         LogItemsView(scannedCode: .constant(nil))
