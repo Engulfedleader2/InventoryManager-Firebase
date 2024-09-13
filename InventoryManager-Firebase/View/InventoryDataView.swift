@@ -39,29 +39,22 @@ struct InventoryDataView: View {
     // Function to fetch Firestore collections and document counts
     private func fetchCollectionsData() {
         let collectionNames = ["Computer", "Monitor", "Server", "Switches", "iPads", "Gary"] // Add your collections
-        var items: [InventoryItem] = Array(repeating: InventoryItem(name: "", quantity: 0), count: collectionNames.count)
+        var items: [InventoryItem] = []
 
-        let group = DispatchGroup()
-
-        for (index, collectionName) in collectionNames.enumerated() {
-            group.enter()
-            db.collection(collectionName).addSnapshotListener { (snapshot, error) in
+        for collectionName in collectionNames {
+            db.collection(collectionName).getDocuments { (snapshot, error) in
                 if let error = error {
                     print("Error fetching collection \(collectionName): \(error.localizedDescription)")
                 } else {
                     let documentCount = snapshot?.documents.count ?? 0
-                    items[index] = InventoryItem(name: collectionName, quantity: documentCount)
+                    let newItem = InventoryItem(name: collectionName, quantity: documentCount)
+                    items.append(newItem)
 
                     DispatchQueue.main.async {
-                        self.inventoryItems = items  // Update state
+                        self.inventoryItems = items // Update state
                     }
                 }
-                group.leave()
             }
-        }
-
-        group.notify(queue: .main) {
-            self.inventoryItems = items
         }
     }
 }
@@ -177,16 +170,4 @@ struct InventoryItem: Identifiable {
     let id = UUID()
     var name: String
     var quantity: Int
-}
-
-// Sample preview
-#Preview {
-    InventoryDataView(inventoryItems: [
-        InventoryItem(name: "Computer", quantity: 10),
-        InventoryItem(name: "Monitor", quantity: 15),
-        InventoryItem(name: "Server", quantity: 5),
-        InventoryItem(name: "Switches", quantity: 20),
-        InventoryItem(name: "iPads", quantity: 12),
-        InventoryItem(name: "Gary", quantity: 5)
-    ])
 }

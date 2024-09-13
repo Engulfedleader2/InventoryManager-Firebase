@@ -11,6 +11,7 @@ import AVFoundation
 struct BarcodeScannerView: UIViewControllerRepresentable {
     @Binding var scannedCode: String?
     @Binding var selectedTab: Int // Binding to control which tab is selected
+    @Environment(\.presentationMode) var presentationMode // Add this line to access presentation mode
 
     func makeUIViewController(context: Context) -> BarcodeScannerViewController {
         let viewController = BarcodeScannerViewController()
@@ -39,16 +40,13 @@ struct BarcodeScannerView: UIViewControllerRepresentable {
             if let metadataObject = metadataObjects.first {
                 guard let readableObject = metadataObject as? AVMetadataMachineReadableCodeObject else { return }
                 guard let stringValue = readableObject.stringValue else { return }
-                AudioServicesPlaySystemSound(SystemSoundID(kSystemSoundID_Vibrate)) // Optional vibration feedback
 
-                // Move to the LogItemsView tab (tag 1)
+                // Move to the LogItemsView tab (tag 1) and dismiss the camera
                 DispatchQueue.main.async {
+                    print("Scanned code: \(stringValue)") // Print for debugging
                     self.parent.scannedCode = stringValue
-                    self.parent.selectedTab = 1 // Automatically switch to the LogItemsView tab
-
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        self.parent.scannedCode = nil
-                    }
+                    self.parent.selectedTab = 1 // Automatically switch to LogItemsView tab
+                    self.parent.presentationMode.wrappedValue.dismiss() // Dismiss camera view after scan
                 }
             }
         }

@@ -18,6 +18,7 @@ struct LogItemsView: View {
     @State private var currentLocation: String = ""  // Current location of the item
     @State private var showingAlert = false
     @State private var collectionNames: [String] = ["Computer", "Monitor", "Server", "Switches", "iPads"]
+    @State private var showScanner = false // To control the barcode scanner view
 
     let db = Firestore.firestore()
 
@@ -50,24 +51,35 @@ struct LogItemsView: View {
                     }
                     .padding(.horizontal)
 
-                    // Asset Details Section
+                    // Asset Tag input (required)
                     VStack(alignment: .leading, spacing: 10) {
                         Text("Asset Tag")
                             .font(.headline)
                             .foregroundColor(.gray)
 
-                        TextField("Enter or Scan Asset Tag", text: $assetTag)
-                            .padding()
-                            .background(Color(.systemGray6))
-                            .cornerRadius(10)
-                            .shadow(radius: 2)
-                            .onAppear {
-                                if let scanned = scannedCode {
-                                    self.assetTag = scanned
-                                    self.scannedCode = nil
-                                }
+                        HStack {
+                            TextField("Enter or Scan Asset Tag", text: $assetTag)
+                                .padding()
+                                .background(Color(.systemGray6))
+                                .cornerRadius(10)
+                                .shadow(radius: 2)
+                            
+                            // Button to trigger barcode scanner
+                            Button(action: {
+                                showScanner = true // Show scanner when button is tapped
+                            }) {
+                                Image(systemName: "barcode.viewfinder")
+                                    .font(.title)
+                                    .padding(10)
                             }
+                            .background(Color.blue.opacity(0.2))
+                            .cornerRadius(10)
+                        }
+                    }
+                    .padding(.horizontal)
 
+                    // Branch/Department
+                    VStack(alignment: .leading, spacing: 10) {
                         Text("Branch/Department")
                             .font(.headline)
                             .foregroundColor(.gray)
@@ -130,9 +142,25 @@ struct LogItemsView: View {
                 .onTapGesture {
                     UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                 }
+                .onChange(of: scannedCode) { newCode in
+                    if let newCode = newCode, !newCode.isEmpty {
+                        // Autofill the asset tag with the scanned code
+                        self.assetTag = newCode
+                        self.scannedCode = nil // Clear the scanned code
+                    }
+                }
             }
             .navigationTitle("Log Items")
             .background(Color(.systemGroupedBackground).ignoresSafeArea())
+            .sheet(isPresented: $showScanner, onDismiss: {
+                if let scanned = scannedCode {
+                    self.assetTag = scanned // Autofill the asset tag
+                    self.showScanner = false // Close scanner
+                }
+            }) {
+                // Barcode scanner view
+                BarcodeScannerView(scannedCode: $scannedCode, selectedTab: .constant(1))
+            }
         }
     }
 
@@ -162,8 +190,14 @@ struct LogItemsView: View {
         // Prepare the data to be stored
         var checkInOutData: [String: Any] = [
             "currentLocation": currentLocation,
-            "checkOut": Date(),
         ]
+        
+        // If the branch/department is "DepartmentIT", we log it as a check-in instead of check-out
+        if currentLocation == "DepartmentIT" {
+            checkInOutData["checkIn"] = Date()  // Log check-in if it's "DepartmentIT"
+        } else {
+            checkInOutData["checkOut"] = Date() // Otherwise, log check-out
+        }
 
         // Add dynamic field based on selected item type
         if selectedItemType == "Computer" {
