@@ -10,130 +10,162 @@ import FirebaseFirestore
 
 struct DashboardView: View {
     @State private var totalAssets: Int = 0
-    @State private var recentActivities: [RecentActivity] = []  // Store recent activities
+    @State private var recentActivities: [RecentActivity] = []
     @State private var isLoading = true
     @State private var errorMessage: String? = nil
-    @State private var searchText: String = ""  // Search text
-    @State private var filteredActivities: [RecentActivity] = []  // Filtered activities based on search
+    @State private var searchText: String = ""
+    @State private var filteredActivities: [RecentActivity] = []
+    @State private var keyboardOffset: CGFloat = 0
 
     let db = Firestore.firestore()
 
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(spacing: 20) {
-                    // Total Assets Section
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Total Assets")
-                            .font(.headline)
-                            .foregroundColor(.primary)
-                            .padding(.leading)
+            ZStack {
+                // Gradient background
+                LinearGradient(gradient: Gradient(colors: [Color(.systemGray6), Color(.systemBackground)]),
+                               startPoint: .topLeading,
+                               endPoint: .bottomTrailing)
+                    .edgesIgnoringSafeArea(.all)
 
-                        if let errorMessage = errorMessage {
-                            Text("Error: \(errorMessage)")
-                                .foregroundColor(.red)
-                                .padding()
-                        } else if isLoading {
-                            ProgressView("Loading data...")
-                                .padding()
-                        } else {
+                ScrollView {
+                    VStack(spacing: 20) {
+                        // Total Assets Section - Now wider and more prominent
+                        VStack(alignment: .center, spacing: 8) {
                             HStack {
-                                Spacer()
-                                Text("\(totalAssets)")
-                                    .font(.system(size: 60, weight: .bold, design: .rounded))
-                                    .foregroundColor(.accentColor)  // Accent color for the total assets
-                                    .padding()
+                                Image(systemName: "cube.box.fill")
+                                    .font(.system(size: 40))
+                                    .foregroundColor(.white)
+                                    .padding(.leading, 10)
+                                
+                                VStack(alignment: .leading) {
+                                    Text("Total Assets")
+                                        .font(.title3)
+                                        .bold()
+                                        .foregroundColor(.white)
+
+                                    if let errorMessage = errorMessage {
+                                        Text("Error: \(errorMessage)")
+                                            .foregroundColor(.red)
+                                            .padding()
+                                    } else if isLoading {
+                                        ProgressView("Loading data...")
+                                            .padding()
+                                    } else {
+                                        Text("\(totalAssets)")
+                                            .font(.system(size: 60, weight: .bold, design: .rounded))
+                                            .foregroundColor(.white)
+                                    }
+                                }
                                 Spacer()
                             }
-                        }
-                    }
-                    .padding()
-                    .background(Color(.systemGray6))
-                    .cornerRadius(15)
-                    .shadow(radius: 5, y: 2)
-                    .padding(.horizontal)
-
-                    // Search Bar
-                    VStack(alignment: .leading) {
-                        TextField("Search Asset Tag", text: $searchText)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            .padding(.vertical, 20)
+                            .padding(.horizontal, 20)
+                            .background(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .fill(LinearGradient(
+                                        gradient: Gradient(colors: [.purple, .blue]),
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing))
+                            )
+                            .shadow(radius: 8)
                             .padding(.horizontal)
-                            .onChange(of: searchText, perform: { value in
+                        }
+
+                        // Search Bar Section
+                        VStack(alignment: .leading) {
+                            HStack {
+                                Image(systemName: "magnifyingglass")
+                                TextField("Search Asset Tag", text: $searchText)
+                                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                            }
+                            .padding()
+                            .background(Color(.systemGray5).opacity(0.3))
+                            .cornerRadius(10)
+                            .padding(.horizontal)
+                            .onChange(of: searchText) { _ in
                                 filterActivities()
-                            })
-                    }
-                    
-                    // Recent Activity Section
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Recent Activity")
-                            .font(.headline)
-                            .padding(.leading)
-                            .foregroundColor(.primary)
+                            }
+                        }
 
-                        if filteredActivities.isEmpty {
-                            Text("No recent activity.")
-                                .foregroundColor(.secondary)
+                        // Recent Activity Section
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Recent Activity")
+                                .font(.headline)
                                 .padding(.leading)
-                        } else {
-                            ForEach(filteredActivities.prefix(5)) { activity in
-                                NavigationLink(destination: AssetDetailView(activity: activity)) {  // Link to detailed view
-                                    VStack(alignment: .leading, spacing: 8) {
-                                        Text("\(activity.assetTag)")
-                                            .font(.headline)
-                                            .foregroundColor(.primary)
-                                        HStack {
-                                            Text("(\(activity.collection))")
-                                                .font(.subheadline)
-                                                .foregroundColor(.gray)
-                                            
-                                            Spacer()
+                                .foregroundColor(.primary)
 
-                                            if let checkIn = activity.checkIn {
-                                                Text("Checked in: \(checkIn, formatter: dateFormatter)")
-                                                    .font(.caption)
-                                                    .foregroundColor(.green)
-                                            }
-
-                                            if let checkOut = activity.checkOut {
-                                                Text("Checked out: \(checkOut, formatter: dateFormatter)")
-                                                    .font(.caption)
-                                                    .foregroundColor(.red)
+                            if filteredActivities.isEmpty {
+                                Text("No recent activity.")
+                                    .foregroundColor(.secondary)
+                                    .padding(.leading)
+                            } else {
+                                ForEach(filteredActivities.prefix(5)) { activity in
+                                    NavigationLink(destination: AssetDetailView(activity: activity)) {
+                                        VStack(alignment: .leading, spacing: 8) {
+                                            HStack {
+                                                VStack(alignment: .leading) {
+                                                    Text("\(activity.assetTag)")
+                                                        .font(.headline)
+                                                        .bold()
+                                                        .foregroundColor(.primary)
+                                                    Text("(\(activity.collection))")
+                                                        .font(.subheadline)
+                                                        .foregroundColor(.gray)
+                                                }
+                                                Spacer()
+                                                VStack {
+                                                    if let checkIn = activity.checkIn {
+                                                        Label("Checked in", systemImage: "arrow.down.circle")
+                                                            .font(.caption)
+                                                            .foregroundColor(.green)
+                                                        Text("\(checkIn, formatter: dateFormatter)")
+                                                            .font(.caption)
+                                                    }
+                                                    if let checkOut = activity.checkOut {
+                                                        Label("Checked out", systemImage: "arrow.up.circle")
+                                                            .font(.caption)
+                                                            .foregroundColor(.red)
+                                                        Text("\(checkOut, formatter: dateFormatter)")
+                                                            .font(.caption)
+                                                    }
+                                                }
                                             }
                                         }
+                                        .padding()
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .fill(Color(.systemGray5).opacity(0.6))
+                                                .shadow(radius: 3, y: 2)
+                                        )
+                                        .padding(.horizontal)
                                     }
-                                    .padding()
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 12)
-                                            .fill(Color(.systemGray5))
-                                            .shadow(radius: 3, y: 2)
-                                    )
-                                    .padding(.horizontal)
+                                    .transition(.opacity.combined(with: .slide))
                                 }
                             }
                         }
+                        .padding()
+                        .background(Color(.systemGray6).opacity(0.6))
+                        .cornerRadius(15)
+                        .shadow(radius: 5, y: 2)
+                        .padding(.horizontal)
                     }
-                    .padding()
-                    .background(Color(.systemGray6))
-                    .cornerRadius(15)
-                    .shadow(radius: 5, y: 2)
-                    .padding(.horizontal)
+                    .padding(.top)
                 }
-                .padding(.top)
-            }
-            .navigationTitle("Dashboard")
-            .onAppear {
-                fetchTotalAssets()  // Fetch total assets
-                fetchRecentActivity()  // Fetch recent activity
+                .navigationTitle("Dashboard")
+                .onAppear {
+                    fetchTotalAssets()
+                    fetchRecentActivity()
+                }
             }
         }
     }
 
-    // Fetch the total assets from each collection
     private func fetchTotalAssets() {
         let collections = ["Computer", "Monitor", "Server", "Switches", "iPads"]
         var total = 0
         
-        let group = DispatchGroup()  // Use DispatchGroup to manage multiple Firestore requests
+        let group = DispatchGroup()
         
         for collection in collections {
             group.enter()
@@ -154,8 +186,26 @@ struct DashboardView: View {
             self.isLoading = false
         }
     }
+    // Method to dismiss the keyboard
+    private func dismissKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        withAnimation {
+            keyboardOffset = 0
+        }
+    }
+    // Method to observe the keyboard and adjust view accordingly
+    private func addKeyboardObservers() {
+        NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillShowNotification, object: nil, queue: .main) { notification in
+            let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect ?? .zero
+            self.keyboardOffset = keyboardFrame.height - 150  // Adjust as needed
+        }
+        
+        NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil, queue: .main) { _ in
+            self.keyboardOffset = 0
+        }
+    }
 
-    // Fetch the recent check-in/check-out activities with better handling
+
     private func fetchRecentActivity() {
         let collections = ["Computer", "Monitor", "Server", "Switches", "iPads"]
         var activities: [RecentActivity] = []
@@ -165,7 +215,6 @@ struct DashboardView: View {
         for collection in collections {
             group.enter()
             
-            // Fetch documents with both checkIn and checkOut considered
             db.collection(collection)
                 .getDocuments { (snapshot, error) in
                     if let error = error {
@@ -177,7 +226,6 @@ struct DashboardView: View {
                             let checkIn = (data["checkIn"] as? Timestamp)?.dateValue()
                             let checkOut = (data["checkOut"] as? Timestamp)?.dateValue()
                             
-                            // Create activity if there's either a checkIn or checkOut
                             if checkIn != nil || checkOut != nil {
                                 let activity = RecentActivity(
                                     assetTag: assetTag,
@@ -194,17 +242,15 @@ struct DashboardView: View {
         }
 
         group.notify(queue: .main) {
-            // Sort by the most recent checkIn or checkOut
             self.recentActivities = activities.sorted {
                 let date1 = max($0.checkIn ?? Date.distantPast, $0.checkOut ?? Date.distantPast)
                 let date2 = max($1.checkIn ?? Date.distantPast, $1.checkOut ?? Date.distantPast)
                 return date1 > date2
             }
-            self.filteredActivities = self.recentActivities  // Set initial state for filtered activities
+            self.filteredActivities = self.recentActivities
         }
     }
 
-    // Filter the recent activities based on search text
     private func filterActivities() {
         if searchText.isEmpty {
             filteredActivities = recentActivities
@@ -223,46 +269,7 @@ struct RecentActivity: Identifiable {
     let checkOut: Date?
 }
 
-// Date formatter for displaying dates
-let dateFormatter: DateFormatter = {
-    let formatter = DateFormatter()
-    formatter.dateStyle = .medium
-    formatter.timeStyle = .short
-    return formatter
-}()
 
-// Asset detail view to show more info about the asset
-struct AssetDetailView: View {
-    var activity: RecentActivity
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Asset Tag: \(activity.assetTag)")
-                .font(.title)
-                .padding()
-
-            Text("Collection: \(activity.collection)")
-                .font(.headline)
-                .padding()
-
-            if let checkIn = activity.checkIn {
-                Text("Checked in: \(checkIn, formatter: dateFormatter)")
-                    .font(.subheadline)
-                    .foregroundColor(.green)
-            }
-
-            if let checkOut = activity.checkOut {
-                Text("Checked out: \(checkOut, formatter: dateFormatter)")
-                    .font(.subheadline)
-                    .foregroundColor(.red)
-            }
-
-            Spacer()
-        }
-        .navigationTitle("Asset Details")
-        .padding()
-    }
-}
 
 #Preview {
     DashboardView()

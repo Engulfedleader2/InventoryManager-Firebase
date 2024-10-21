@@ -110,6 +110,7 @@ struct GaryLogItemsView: View {
                                 .cornerRadius(10)
                                 .shadow(radius: 2)
 
+
                             // Item Type
                             Text("Item Type")
                                 .font(.headline)
@@ -282,7 +283,7 @@ struct GaryLogItemsView: View {
         let garyData: [String: Any] = [
             "model": model,
             "serialNumber": serial,
-            "itemType": itemType,
+            "type": itemType,
             "checkOut": checkOutDate
         ]
 

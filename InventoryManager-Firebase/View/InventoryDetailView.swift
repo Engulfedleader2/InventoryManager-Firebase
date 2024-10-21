@@ -8,19 +8,21 @@
 import SwiftUI
 import FirebaseFirestore
 
-// View to display all documents in the selected collection with expandable rows
 struct InventoryDetailView: View {
-    var collectionName: String // The name of the Firestore collection
-    @State private var documents: [QueryDocumentSnapshot] = [] // List of Firestore documents
-    @State private var expandedDocuments: Set<String> = [] // Track expanded documents by their documentID
-    @State private var isLoading = true // Loading state
+    var collectionName: String
+    @State private var documents: [QueryDocumentSnapshot] = []
+    @State private var expandedDocuments: Set<String> = []
+    @State private var isLoading = true
     @State private var errorMessage: String? = nil
     
     let db = Firestore.firestore()
 
     var body: some View {
         ZStack {
-            Color(.systemGroupedBackground)
+            // Professional background gradient for dark/light mode
+            LinearGradient(gradient: Gradient(colors: [Color(.systemBackground), Color(.systemGray6)]),
+                           startPoint: .topLeading,
+                           endPoint: .bottomTrailing)
                 .edgesIgnoringSafeArea(.all)
 
             ScrollView {
@@ -39,6 +41,8 @@ struct InventoryDetailView: View {
                             DocumentCard(document: document, isExpanded: expandedDocuments.contains(document.documentID)) {
                                 toggleExpansion(for: document.documentID)
                             }
+                            .transition(.slide)
+                            .animation(.easeInOut, value: expandedDocuments)
                         }
                     }
                 }
@@ -73,7 +77,6 @@ struct InventoryDetailView: View {
     }
 }
 
-// Custom card for each document with full-width and improved design
 struct DocumentCard: View {
     var document: QueryDocumentSnapshot
     var isExpanded: Bool
@@ -84,20 +87,25 @@ struct DocumentCard: View {
             Button(action: toggleExpandAction) {
                 HStack {
                     Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
-                        .foregroundColor(.blue)
+                        .foregroundColor(.accentColor)
                         .rotationEffect(isExpanded ? .degrees(180) : .degrees(0))
                         .animation(.spring(), value: isExpanded)
                     
                     Text("Asset Tag: \(document.documentID)")
                         .font(.title3)
                         .fontWeight(.bold)
-                        .foregroundColor(.blue)
+                        .foregroundColor(.primary)
                 }
                 .padding()
-                .frame(maxWidth: .infinity, alignment: .leading)  // Full width
-                .background(Color(.systemGray5).opacity(0.2)) // Subtle background
-                .cornerRadius(10)
-                .shadow(radius: 3)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    // Gradient background that looks good in both light and dark modes
+                    LinearGradient(gradient: Gradient(colors: [Color(.systemGray5).opacity(0.3), Color(.systemGray4).opacity(0.6)]),
+                                   startPoint: .topLeading,
+                                   endPoint: .bottomTrailing)
+                )
+                .cornerRadius(12)
+                .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
             }
 
             if isExpanded {
@@ -119,16 +127,20 @@ struct DocumentCard: View {
                     }
                 }
                 .padding(.top, 8)
+                .transition(.opacity)
             }
         }
         .padding()
-        .frame(maxWidth: .infinity)  // Full width card
-        .background(Color(.systemGray6))  // Subtle card background
-        .cornerRadius(10)
-        .shadow(radius: 3)
-        .padding(.vertical, 4)  // Spacing between cards
+        .frame(maxWidth: .infinity)
+        .background(
+            // Adaptive background for dark/light mode
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.systemGray6).opacity(0.7))
+        )
+        .shadow(radius: 4, x: 0, y: 2)
+        .padding(.vertical, 4)
     }
-    
+
     private func formatValue(_ value: Any) -> String {
         if let timestamp = value as? Timestamp {
             return DateFormatter.localizedString(from: timestamp.dateValue(), dateStyle: .short, timeStyle: .short)

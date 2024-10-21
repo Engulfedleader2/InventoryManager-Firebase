@@ -28,7 +28,7 @@ struct InventoryDataView: View {
                 .padding()
                 .onAppear {
                     if inventoryItems.isEmpty {
-                        fetchCollectionsData() // Fetch collection data from Firestore when the view appears
+                        listenToCollections() // Start listening to Firestore updates
                     }
                 }
             }
@@ -36,22 +36,31 @@ struct InventoryDataView: View {
         }
     }
 
-    // Function to fetch Firestore collections and document counts
-    private func fetchCollectionsData() {
-        let collectionNames = ["Computer", "Monitor", "Server", "Switches", "iPads", "Gary"] // Add your collections
+    // Function to listen to Firestore collections and update in real-time
+    private func listenToCollections() {
+        let collectionNames = ["Computer", "Monitor", "Server", "Switches", "iPads", "Gary"] // Define your collections in the desired order
         var items: [InventoryItem] = []
 
         for collectionName in collectionNames {
-            db.collection(collectionName).getDocuments { (snapshot, error) in
+            db.collection(collectionName).addSnapshotListener { (snapshot, error) in
                 if let error = error {
-                    print("Error fetching collection \(collectionName): \(error.localizedDescription)")
+                    print("Error listening to collection \(collectionName): \(error.localizedDescription)")
                 } else {
                     let documentCount = snapshot?.documents.count ?? 0
                     let newItem = InventoryItem(name: collectionName, quantity: documentCount)
-                    items.append(newItem)
-
+                    
+                    // Update or append item in inventory
                     DispatchQueue.main.async {
-                        self.inventoryItems = items // Update state
+                        if let index = items.firstIndex(where: { $0.name == collectionName }) {
+                            items[index] = newItem  // Update existing item
+                        } else {
+                            items.append(newItem)    // Add new item
+                        }
+
+                        // Sort items based on the order in collectionNames array
+                        self.inventoryItems = items.sorted(by: {
+                            collectionNames.firstIndex(of: $0.name) ?? 0 < collectionNames.firstIndex(of: $1.name) ?? 0
+                        })
                     }
                 }
             }
@@ -82,6 +91,7 @@ struct InventoryBoxView: View {
                 .shadow(radius: 2)
 
             // Conditional background image for "Gary"
+            /*
             if item.name == "Gary" {
                 Image("gary")  // Replace with your image name
                     .resizable()
@@ -90,7 +100,8 @@ struct InventoryBoxView: View {
                     .frame(height: 120)  // Ensure the image height matches the box
                     .clipShape(RoundedRectangle(cornerRadius: 10))  // Clip to match box shape
             }
-
+            */
+            
             // Box content
             VStack(alignment: .leading, spacing: 10) {
                 Text(item.name)

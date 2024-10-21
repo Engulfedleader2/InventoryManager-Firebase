@@ -51,7 +51,7 @@ class BarcodeScannerViewController: UIViewController {
         if captureSession.canAddOutput(metadataOutput) {
             captureSession.addOutput(metadataOutput)
             metadataOutput.setMetadataObjectsDelegate(delegate, queue: DispatchQueue.main)
-            metadataOutput.metadataObjectTypes = [.code39]
+            metadataOutput.metadataObjectTypes = [.code39, .code93, .code128, .ean8, .ean13]
         } else {
             print("Failed to add output to capture session")
             return
